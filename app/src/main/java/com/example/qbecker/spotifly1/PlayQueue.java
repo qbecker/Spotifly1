@@ -5,6 +5,9 @@ import android.os.StrictMode;
 
 import android.os.Bundle;
 
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -30,17 +33,17 @@ import com.spotify.sdk.android.player.PlayerEvent;
 import com.spotify.sdk.android.player.Spotify;
 import com.spotify.sdk.android.player.SpotifyPlayer;
 
-public class PlayQueue extends Activity implements
-        SpotifyPlayer.NotificationCallback, ConnectionStateCallback {
+public class PlayQueue extends Activity implements ConnectionStateCallback, Player.NotificationCallback {
 
     LocalConfig conf = new LocalConfig();
     String host = conf.HOST_NAME;
-    String client_Id = conf.CLIENT_ID;
 
     TextView txt;
 
     ListView mSongList;
     ArrayList<SongWrapper> songArrList = new ArrayList<SongWrapper>();
+
+
 
 
     private JsonArray sendGet(String toSend) throws Exception {
@@ -75,10 +78,22 @@ public class PlayQueue extends Activity implements
         mSongList = (ListView) findViewById(R.id.PlayList);
         txt = (TextView) findViewById(R.id.QueueNameText);
 
+        mSongList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String selectedFromList =(String) (mSongList.getItemAtPosition(i));
+                MainActivity.mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
+
+            }
+
+        });
+
         Bundle extras = getIntent().getExtras();
+
         if (extras != null) {
             String queueName = extras.getString("QueueName");
             txt.setText((CharSequence) queueName);
+
             try {
 
                 JsonArray songs = sendGet(host + "get/"+queueName);

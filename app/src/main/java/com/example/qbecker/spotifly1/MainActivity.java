@@ -7,12 +7,20 @@ import com.google.gson.JsonParser;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.player.Config;
+import com.spotify.sdk.android.player.ConnectionStateCallback;
+import com.spotify.sdk.android.player.Error;
+import com.spotify.sdk.android.player.Player;
+import com.spotify.sdk.android.player.PlayerEvent;
+import com.spotify.sdk.android.player.Spotify;
+import com.spotify.sdk.android.player.SpotifyPlayer;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,15 +34,15 @@ import java.net.URL;
 
 //This class will hold the spotify authentication and queue creation/ joining an already made queue.
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Player.NotificationCallback, ConnectionStateCallback {
 
     LocalConfig conf = new LocalConfig();
     String host = conf.HOST_NAME;
     int REQUEST_CODE = conf.REQUEST_CODE;
     String REDIRECT_URI = conf.REDIRECT_URI;
     String CLIENT_ID = conf.CLIENT_ID;
+    public static Player mPlayer;
 
-    Intent testIntent = new Intent(MainActivity.this, PlayQueue.class);
 
     private JsonObject sendGet(String toSend) throws Exception {
         String url = toSend;
@@ -62,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -93,8 +102,9 @@ public class MainActivity extends AppCompatActivity {
                     if(response.get("response").getAsString().equals("N")){
                         //Toast.makeText(MainActivity.this, "Sorry that queue already exists, please try another", Toast.LENGTH_SHORT).show();
 
-                        Toast.makeText(MainActivity.this, "Queue created!", Toast.LENGTH_SHORT).show();
 
+                        Toast.makeText(MainActivity.this, "Queue created!", Toast.LENGTH_SHORT).show();
+                        Intent testIntent = new Intent(MainActivity.this, PlayQueue.class);
                         testIntent.putExtra("QueueName", s);
                         MainActivity.this.startActivity(testIntent);
                     }else if(response.get("response").getAsString().equals("Y")){
@@ -131,24 +141,67 @@ public class MainActivity extends AppCompatActivity {
         // Check if result comes from the correct activity
         if (requestCode == REQUEST_CODE) {
             AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+            Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
+            Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver(){
 
-            switch (response.getType()) {
-                // Response was successful and contains auth token
-                case TOKEN:
-                    // Handle successful response
-                    testIntent.putExtra("Auth Token", response);
-                    break;
+                @Override
+                public void onInitialized(SpotifyPlayer spotifyPlayer) {
+                    Log.d("Made it", "This far");
+                    mPlayer = spotifyPlayer;
+                    Log.d("Made it", "This far");
+                    mPlayer.addConnectionStateCallback(MainActivity.this);
+                    Log.d("Made it", "This far");
+                    mPlayer.addNotificationCallback(MainActivity.this);
+                    mPlayer.getPlaybackState();
+                    Log.d("Made it", "This far");
+                  //  mPlayer.playUri(null, "spotify:track:2TpxZ7JUBn3uw46aR7qd6V", 0, 0);
+                    Log.d("Made it", "This far");
 
-                // Auth flow returned an error
-                case ERROR:
-                    // Handle error response
-                    break;
 
-                // Most likely auth flow was cancelled
-                default:
-                    // Handle other cases
-            }
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    Log.d("Made it", "failed");
+                    Log.d("MainActivity", "Could not initialize player: " + throwable.getMessage());
+                }
+            });
         }
     }
 
+    @Override
+    public void onPlaybackEvent(PlayerEvent playerEvent) {
+
+    }
+
+    @Override
+    public void onPlaybackError(Error error) {
+
+    }
+
+    @Override
+    public void onLoggedIn() {
+        Log.d("Should Play", "Here");
+        //mPlayer.playUri(null, "spotify:track:2TpxZ7JUBn3uw46aR7qd6V", 0, 0);
+    }
+
+    @Override
+    public void onLoggedOut() {
+
+    }
+
+    @Override
+    public void onLoginFailed(int i) {
+
+    }
+
+    @Override
+    public void onTemporaryError() {
+
+    }
+
+    @Override
+    public void onConnectionMessage(String s) {
+
+    }
 }
