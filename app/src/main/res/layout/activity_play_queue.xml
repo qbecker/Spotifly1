@@ -42,4 +42,34 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="46dp"
         android:id="@+id/PlayList" />
+
+    <Button
+        android:text="Prev"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/QueueNameText"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="13dp"
+        android:layout_marginStart="13dp"
+        android:id="@+id/prev_button" />
+
+    <Button
+        android:text="Play/Pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/QueueNameText"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/Play_Pause_button" />
+
+    <Button
+        android:text="Next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/Play_Pause_button"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="17dp"
+        android:layout_marginEnd="17dp"
+        android:id="@+id/next_button" />
 </RelativeLayout>

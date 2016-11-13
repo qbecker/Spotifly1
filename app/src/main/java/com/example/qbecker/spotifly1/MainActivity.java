@@ -171,7 +171,8 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
 
     @Override
     public void onPlaybackEvent(PlayerEvent playerEvent) {
-
+      // Log.d("MainActivity", "Playback event received: " + playerEvent.name());
+        PlayQueue.chooseWhatToDo(playerEvent);
     }
 
     @Override
@@ -181,8 +182,6 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
 
     @Override
     public void onLoggedIn() {
-        Log.d("Should Play", "Here");
-        //mPlayer.playUri(null, "spotify:track:2TpxZ7JUBn3uw46aR7qd6V", 0, 0);
     }
 
     @Override

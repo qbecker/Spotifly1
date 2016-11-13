@@ -9,7 +9,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.gson.JsonArray;
@@ -28,23 +30,53 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Error;
+import com.spotify.sdk.android.player.PlaybackState;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerEvent;
 import com.spotify.sdk.android.player.Spotify;
 import com.spotify.sdk.android.player.SpotifyPlayer;
 
-public class PlayQueue extends Activity implements ConnectionStateCallback, Player.NotificationCallback {
+public class PlayQueue extends Activity {
 
     LocalConfig conf = new LocalConfig();
     String host = conf.HOST_NAME;
 
     TextView txt;
 
-    ListView mSongList;
+   public ListView  mSongList = (ListView) findViewById(R.id.PlayList);
     ArrayList<SongWrapper> songArrList = new ArrayList<SongWrapper>();
 
+    public static Player mPlayer = MainActivity.mPlayer;
+    public static PlaybackState mCurrentPlaybackState;
+    private final Player.OperationCallback mOperationCallBack = new Player.OperationCallback(){
+
+        @Override
+        public void onSuccess() {
+
+        }
+
+        @Override
+        public void onError(Error error) {
+
+        }
+    };
 
 
+    public void nextSong(){
+
+    }
+
+
+    public static void chooseWhatToDo(PlayerEvent playerEvent){
+        mCurrentPlaybackState = mPlayer.getPlaybackState();
+        Log.d("Player Event ", playerEvent.name());
+        switch(playerEvent){
+            case kSpPlaybackNotifyTrackDelivered:
+               // nextSong();
+
+
+        }
+    }
 
     private JsonArray sendGet(String toSend) throws Exception {
         URL obj = new URL(toSend);
@@ -75,14 +107,29 @@ public class PlayQueue extends Activity implements ConnectionStateCallback, Play
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        mSongList = (ListView) findViewById(R.id.PlayList);
-        txt = (TextView) findViewById(R.id.QueueNameText);
+
+
+        Button playPauseButtn = (Button) findViewById(R.id.Play_Pause_button);
+        playPauseButtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (mCurrentPlaybackState != null && mCurrentPlaybackState.isPlaying) {
+                    mPlayer.pause(mOperationCallBack);
+                } else {
+                    mPlayer.resume(mOperationCallBack);
+                }
+            }
+        });
+
+
+       // txt = (TextView) findViewById(R.id.QueueNameText);
 
         mSongList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 String selectedFromList =(String) (mSongList.getItemAtPosition(i));
-                MainActivity.mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
+                mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
 
             }
 
@@ -92,7 +139,7 @@ public class PlayQueue extends Activity implements ConnectionStateCallback, Play
 
         if (extras != null) {
             String queueName = extras.getString("QueueName");
-            txt.setText((CharSequence) queueName);
+           // txt.setText((CharSequence) queueName);
 
             try {
 
@@ -117,43 +164,10 @@ public class PlayQueue extends Activity implements ConnectionStateCallback, Play
                 e.printStackTrace();
             }
 
-            //The key argument here must match that used in the other activity
+
 
         }
     }
 
-    @Override
-    public void onLoggedIn() {
 
-    }
-
-    @Override
-    public void onLoggedOut() {
-
-    }
-
-    @Override
-    public void onLoginFailed(int i) {
-
-    }
-
-    @Override
-    public void onTemporaryError() {
-
-    }
-
-    @Override
-    public void onConnectionMessage(String s) {
-
-    }
-
-    @Override
-    public void onPlaybackEvent(PlayerEvent playerEvent) {
-
-    }
-
-    @Override
-    public void onPlaybackError(Error error) {
-
-    }
 }
