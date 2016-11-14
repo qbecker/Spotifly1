@@ -32,6 +32,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static com.example.qbecker.spotifly1.PlayQueue.chooseWhatToDo;
+
 //This class will hold the spotify authentication and queue creation/ joining an already made queue.
 
 public class MainActivity extends AppCompatActivity implements Player.NotificationCallback, ConnectionStateCallback {
@@ -146,18 +148,10 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
 
                 @Override
                 public void onInitialized(SpotifyPlayer spotifyPlayer) {
-                    Log.d("Made it", "This far");
                     mPlayer = spotifyPlayer;
-                    Log.d("Made it", "This far");
                     mPlayer.addConnectionStateCallback(MainActivity.this);
-                    Log.d("Made it", "This far");
                     mPlayer.addNotificationCallback(MainActivity.this);
                     mPlayer.getPlaybackState();
-                    Log.d("Made it", "This far");
-                  //  mPlayer.playUri(null, "spotify:track:2TpxZ7JUBn3uw46aR7qd6V", 0, 0);
-                    Log.d("Made it", "This far");
-
-
                 }
 
                 @Override
@@ -172,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
     @Override
     public void onPlaybackEvent(PlayerEvent playerEvent) {
       // Log.d("MainActivity", "Playback event received: " + playerEvent.name());
-        PlayQueue.chooseWhatToDo(playerEvent);
+        chooseWhatToDo(playerEvent);
     }
 
     @Override
