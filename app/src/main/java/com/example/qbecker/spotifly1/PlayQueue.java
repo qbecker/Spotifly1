@@ -1,18 +1,15 @@
 package com.example.qbecker.spotifly1;
 
 import android.app.Activity;
-import android.os.Message;
+import android.os.AsyncTask;
 import android.os.StrictMode;
-
 import android.os.Bundle;
-
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.gson.JsonArray;
@@ -25,31 +22,24 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-import com.spotify.sdk.android.authentication.AuthenticationClient;
-import com.spotify.sdk.android.authentication.AuthenticationRequest;
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.player.Config;
-import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Error;
 import com.spotify.sdk.android.player.PlaybackState;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerEvent;
-import com.spotify.sdk.android.player.Spotify;
-import com.spotify.sdk.android.player.SpotifyPlayer;
 
 public class PlayQueue extends Activity implements Player.NotificationCallback {
 
     LocalConfig conf = new LocalConfig();
     String host = conf.HOST_NAME;
 
-    TextView txt;
-
-    public static ListView  mSongList;
-    static String[] songList;
-    static ArrayList<SongWrapper> songArrList = new ArrayList<SongWrapper>();
-    static ArrayAdapter adapter;
-    public static Player mPlayer = MainActivity.mPlayer;
-    public static PlaybackState mCurrentPlaybackState;
+    private TextView txt;
+    public String tosend;
+    private  ListView  mSongList;
+    private String[] songList;
+    private ArrayList<SongWrapper> songArrList = new ArrayList<SongWrapper>();
+    private ArrayAdapter adapter;
+    private Player mPlayer = MainActivity.mPlayer;
+    private  PlaybackState mCurrentPlaybackState;
     private final Player.OperationCallback mOperationCallBack = new Player.OperationCallback(){
 
         @Override
@@ -63,7 +53,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         }
     };
 
-    public  void nextSong(){
+    public void nextSong(){
         SongWrapper temp = songArrList.get(0);
         songArrList.remove(0);
         songArrList.add(songArrList.size(), temp);
@@ -108,19 +98,9 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
 
         adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, songList);
         mSongList.setAdapter(adapter);
+        String selectedFromList =(String) (mSongList.getItemAtPosition(0));
+        mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
 
-    }
-
-    public static void chooseWhatToDo(PlayerEvent playerEvent){
-        PlayQueue play = new PlayQueue();
-        mCurrentPlaybackState = mPlayer.getPlaybackState();
-        Log.d("Player Event ", playerEvent.name());
-        switch(playerEvent){
-            case kSpPlaybackNotifyTrackDelivered:
-                //nextSong();
-                break;
-
-        }
     }
 
     private JsonArray sendGet(String toSend) throws Exception {
@@ -131,8 +111,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
 
         int responseCode = con.getResponseCode();
 
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         String inputLine;
         StringBuffer response = new StringBuffer();
 
@@ -142,6 +121,23 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         in.close();
         JsonArray result = new JsonParser().parse(response.toString()).getAsJsonArray();
         return result;
+    }
+
+    private void startListening(String queueName){
+        try{
+            JsonArray songs = sendGet(host + "get/"+queueName);
+            //JsonArray songs = JSONBackgroud.execute();
+            Log.d("Song size", Integer.toString(songs.size()));
+            if(songs.size() <= 0){
+                Thread.sleep(3000);
+                startListening(queueName);
+            }else{
+                updateListView(songs);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -154,7 +150,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         StrictMode.setThreadPolicy(policy);
 
         mSongList = (ListView) findViewById(R.id.PlayList);
-
+        txt = (TextView) findViewById(R.id.QueueNameText);
         Button prevSongButtn = (Button) findViewById(R.id.prev_button);
         prevSongButtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -174,6 +170,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         playPauseButtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                mCurrentPlaybackState = mPlayer.getPlaybackState();
                 if (mCurrentPlaybackState != null && mCurrentPlaybackState.isPlaying) {
                     mPlayer.pause(mOperationCallBack);
                 } else {
@@ -185,25 +182,19 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         mSongList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String selectedFromList =(String) (mSongList.getItemAtPosition(i));
-                mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
-
+               // String selectedFromList =(String) (mSongList.getItemAtPosition(i));
+                //mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
             }
-
         });
-
 
         Bundle extras = getIntent().getExtras();
 
         if (extras != null) {
             String queueName = extras.getString("QueueName");
-           // txt.setText((CharSequence) queueName);
-            try {
-                JsonArray songs = sendGet(host + "get/"+queueName);
-                updateListView(songs);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            txt.setText((CharSequence) queueName);
+            JSONBackgroud back = new JSONBackgroud();
+            tosend = host + "get/"+queueName;
+            back.execute(tosend);
         }
     }
 
@@ -215,7 +206,6 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
                 Log.d("Its calling", "This");
                 nextSong();
                 break;
-
         }
     }
 
@@ -223,4 +213,36 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
     public void onPlaybackError(Error error) {
 
     }
+
+    private class JSONBackgroud extends AsyncTask<String, String, JsonArray>{
+        @Override
+        protected JsonArray doInBackground(String... params) {
+            JSONGetter jsn = new JSONGetter();
+            try {
+                JsonArray result = jsn.sendGet(params[0]);
+                return result;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+        @Override
+        public void onPostExecute(JsonArray result){
+            if (result.size() <=0){
+                try {
+                    Thread.sleep(3000);
+                    JSONBackgroud jsn = new JSONBackgroud();
+                    jsn.execute(tosend);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }else{
+                updateListView(result);
+            }
+        }
+
+    }
 }
+
+
+//https://open.spotify.com/track/3LRJbFT9rKoKv4aW7PuBJC

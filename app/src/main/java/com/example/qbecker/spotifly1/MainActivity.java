@@ -32,8 +32,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import static com.example.qbecker.spotifly1.PlayQueue.chooseWhatToDo;
-
 //This class will hold the spotify authentication and queue creation/ joining an already made queue.
 
 public class MainActivity extends AppCompatActivity implements Player.NotificationCallback, ConnectionStateCallback {
@@ -72,20 +70,15 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        AuthenticationRequest.Builder builder =
-                new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
-
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID, AuthenticationResponse.Type.TOKEN, REDIRECT_URI);
         builder.setScopes(new String[]{"streaming"});
         AuthenticationRequest request = builder.build();
-
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
-
 
         //Text field
         final EditText queueNameTxt = (EditText) findViewById(R.id.queueNameTextBox);
@@ -99,12 +92,11 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
                 s = s.trim().replace(" ", "");
                 String tosend = host+"create/" + s;
                 try {
+
                     JsonObject response = sendGet(tosend);
 
                     if(response.get("response").getAsString().equals("N")){
                         //Toast.makeText(MainActivity.this, "Sorry that queue already exists, please try another", Toast.LENGTH_SHORT).show();
-
-
                         Toast.makeText(MainActivity.this, "Queue created!", Toast.LENGTH_SHORT).show();
                         Intent testIntent = new Intent(MainActivity.this, PlayQueue.class);
                         testIntent.putExtra("QueueName", s);
@@ -115,11 +107,9 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
                         testIntent.putExtra("QueueName", s);
                         MainActivity.this.startActivity(testIntent);
                     }
-
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "There was a problem connecting to the server", Toast.LENGTH_SHORT).show();
                 }
-
             }
         });
 
@@ -156,7 +146,6 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
 
                 @Override
                 public void onError(Throwable throwable) {
-                    Log.d("Made it", "failed");
                     Log.d("MainActivity", "Could not initialize player: " + throwable.getMessage());
                 }
             });
@@ -165,8 +154,7 @@ public class MainActivity extends AppCompatActivity implements Player.Notificati
 
     @Override
     public void onPlaybackEvent(PlayerEvent playerEvent) {
-      // Log.d("MainActivity", "Playback event received: " + playerEvent.name());
-        chooseWhatToDo(playerEvent);
+
     }
 
     @Override
