@@ -1,8 +1,5 @@
 package com.example.qbecker.spotifly1;
 
-
-import android.os.AsyncTask;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 
