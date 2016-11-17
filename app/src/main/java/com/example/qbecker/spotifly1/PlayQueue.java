@@ -71,30 +71,31 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         songList = new String[songArrList.size()];
         for(int i = 0; i < songArrList.size(); i++){
             SongWrapper songWrapper = songArrList.get(i);
-            songList[i] = songWrapper.song;
+            songList[i] = songWrapper.name + " - " + songWrapper.artist;
         }
         adapter = new ArrayAdapter(getBaseContext(), android.R.layout.simple_list_item_1, songList);
         mSongList.setAdapter(adapter);
         mCurrentPlaybackState = mPlayer.getPlaybackState();
         if(!mCurrentPlaybackState.isPlaying && !isPaused || nextSong){
-            String selectedFromList =(String) (mSongList.getItemAtPosition(0));
+            String selectedFromList = songArrList.get(0).getLink();
             mPlayer.playUri(null, "spotify:track:" + selectedFromList, 0, 0);
             nextSong = false;
         }
-
     }
 
     public void populateSongArr(JsonArray songs){
         for(int k = 0; k < songs.size(); k++) {
             SongWrapper wrap = new SongWrapper();
             JsonObject songData = songs.get(k).getAsJsonObject();
-            wrap.setSong(songData.get("Song").getAsString());
+            wrap.setLink(songData.get("link").getAsString());
+            wrap.setArtist(songData.get("Artist").getAsString());
+            wrap.setName(songData.get("Name").getAsString());
                 if(!songArrList.isEmpty()){
                     int count = 0;
                     for(int i = 0; i < songArrList.size(); i++){
                         SongWrapper tester = songArrList.get(i);
-                        String temp1 = tester.getSong();
-                        String temp2 = wrap.getSong();
+                        String temp1 = tester.getLink();
+                        String temp2 = wrap.getLink();
                         if(temp1.equalsIgnoreCase(temp2)){
                             count ++;
                         }
@@ -122,7 +123,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
                   back.execute(tosend);
               }
           }
-        }, 2000, 25000);
+        }, 2000, 30000);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_queue);
