@@ -43,9 +43,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
     private final Player.OperationCallback mOperationCallBack = new Player.OperationCallback(){
 
         @Override
-        public void onSuccess() {
-
-        }
+        public void onSuccess() {}
 
         @Override
         public void onError(Error error) {
@@ -115,7 +113,6 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
     protected void onCreate(Bundle savedInstanceState) {
         t = new Timer();
         t.scheduleAtFixedRate(new TimerTask() {
-
           @Override
           public void run() {
               //Called each time when 1000 milliseconds (1 second) (the period parameter)
@@ -174,13 +171,13 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
                 songArrList.remove(i);
                 songArrList.add(0, temp);
                 if(i>0){
+                    nextSong = true;
                     updateListView();
                 }
             }
         });
 
         Bundle extras = getIntent().getExtras();
-
         if (extras != null) {
             queueName = extras.getString("QueueName");
             txt.setText((CharSequence) queueName);
@@ -192,7 +189,6 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         Log.d("Player Event ", playerEvent.name());
         switch(playerEvent){
             case kSpPlaybackNotifyTrackDelivered:
-                Log.d("Its calling", "This");
                 nextSong();
                 break;
         }
