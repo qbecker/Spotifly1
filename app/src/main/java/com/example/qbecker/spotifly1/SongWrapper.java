@@ -1,8 +1,10 @@
 package com.example.qbecker.spotifly1;
 
 
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class SongWrapper {
+public class SongWrapper implements Parcelable {
     String link;
     String artist;
     String name;
@@ -29,5 +31,15 @@ public class SongWrapper {
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+
     }
 }

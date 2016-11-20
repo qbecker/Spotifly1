@@ -2,6 +2,7 @@ package com.example.qbecker.spotifly1;
 
 import android.app.Activity;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.util.Log;
@@ -36,7 +37,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
     public String queueName;
     private  ListView  mSongList;
     private String[] songList;
-    private ArrayList<SongWrapper> songArrList = new ArrayList<SongWrapper>();
+    private ArrayList<SongWrapper> songArrList; //= new ArrayList<SongWrapper>();
     private ArrayAdapter adapter;
     private Player mPlayer = MainActivity.mPlayer;
     private  PlaybackState mCurrentPlaybackState;
@@ -112,6 +113,15 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if(savedInstanceState == null || !savedInstanceState.containsKey("key")) {
+            songArrList = new ArrayList<SongWrapper>();
+        }
+        else {
+            songArrList = savedInstanceState.getParcelableArrayList("key");
+        }
+
         t = new Timer();
         t.scheduleAtFixedRate(new TimerTask() {
           @Override
@@ -123,7 +133,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
                   back.execute(tosend);
               }
           }
-        }, 2000, 30000);
+        }, 50, 30000);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_queue);
@@ -183,6 +193,12 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
             queueName = extras.getString("QueueName");
             txt.setText((CharSequence) queueName);
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList("key", (ArrayList<? extends Parcelable>) songArrList);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
