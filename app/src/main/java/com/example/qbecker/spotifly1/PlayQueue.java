@@ -30,8 +30,11 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
     String host = conf.HOST_NAME;
 
     Timer t;
+
     boolean isPaused = false;
     boolean nextSong = false;
+    int updateCounter = 0;
+
     private TextView txt;
     public String tosend;
     public String queueName;
@@ -232,13 +235,23 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         public void onPostExecute(JsonArray result){
             if (result.size() <=0){
                 try {
-                    Thread.sleep(3000);
-                    JSONBackgroud jsn = new JSONBackgroud();
-                    jsn.execute(tosend);
+                    Thread.sleep(1000);
+                    updateCounter++;
+                    if(updateCounter > 2){
+                        updateCounter = 0;
+                        updateListView();
+                        Log.d("failed update", "Exiting");
+                    }else{
+                        JSONBackgroud jsn = new JSONBackgroud();
+                        Log.d("Update is failing", "Trying again");
+                        jsn.execute(tosend);
+                    }
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }else{
+                updateCounter = 0;
                 populateSongArr(result);
             }
         }
