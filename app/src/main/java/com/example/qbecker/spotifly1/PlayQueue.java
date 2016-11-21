@@ -33,10 +33,13 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
 
     boolean isPaused = false;
     boolean nextSong = false;
-    int updateCounter = 0;
+    boolean userClicked = false;
+    int updateFailCounter = 0;
+    int updateRemoveCounter = 0;
 
     private TextView txt;
     public String tosend;
+    public String tosendDel;
     public String queueName;
     private  ListView  mSongList;
     private String[] songList;
@@ -51,16 +54,30 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
 
         @Override
         public void onError(Error error) {
+            userClicked = true;
             nextSong();
         }
     };
 
     public void nextSong(){
-        SongWrapper temp = songArrList.get(0);
-        songArrList.remove(0);
-        songArrList.add(songArrList.size(), temp);
-        nextSong = true;
-        updateListView();
+        if(userClicked){
+            SongWrapper temp = songArrList.get(0);
+            songArrList.remove(0);
+            songArrList.add(songArrList.size(), temp);
+            nextSong = true;
+            userClicked = false;
+            updateListView();
+
+        }else{
+            SongWrapper temp = songArrList.get(0);
+            nextSong = true;
+            tosendDel = host + "remove/"+queueName +"/" + temp.getLink();
+            Log.d("calling remove", tosendDel);
+            JSONBackgroupRemoveSong remove = new JSONBackgroupRemoveSong();
+            songArrList.remove(0);
+            remove.execute(tosendDel);
+        }
+
     }
 
     public void prevSong(){
@@ -131,7 +148,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
           public void run() {
               //Called each time when 1000 milliseconds (1 second) (the period parameter)
               if(queueName != null){
-                  JSONBackgroud back = new JSONBackgroud();
+                  JSONBackgroudUpdateSongList back = new JSONBackgroudUpdateSongList();
                   tosend = host + "get/"+queueName;
                   back.execute(tosend);
               }
@@ -159,6 +176,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         nextSongButtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
+                userClicked = true;
                 nextSong();
             }
         });
@@ -186,6 +204,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
                 songArrList.add(0, temp);
                 if(i>0){
                     nextSong = true;
+                    userClicked = true;
                     updateListView();
                 }
             }
@@ -209,6 +228,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         Log.d("Player Event ", playerEvent.name());
         switch(playerEvent){
             case kSpPlaybackNotifyTrackDelivered:
+                userClicked = false;
                 nextSong();
                 break;
         }
@@ -219,7 +239,7 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
         nextSong();
     }
 
-    private class JSONBackgroud extends AsyncTask<String, String, JsonArray>{
+    private class JSONBackgroudUpdateSongList extends AsyncTask<String, String, JsonArray>{
         @Override
         protected JsonArray doInBackground(String... params) {
             JSONGetter jsn = new JSONGetter();
@@ -236,13 +256,13 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
             if (result.size() <=0){
                 try {
                     Thread.sleep(1000);
-                    updateCounter++;
-                    if(updateCounter > 2){
-                        updateCounter = 0;
+                    updateFailCounter++;
+                    if(updateFailCounter > 2){
+                        updateFailCounter = 0;
                         updateListView();
                         Log.d("failed update", "Exiting");
                     }else{
-                        JSONBackgroud jsn = new JSONBackgroud();
+                        JSONBackgroudUpdateSongList jsn = new JSONBackgroudUpdateSongList();
                         Log.d("Update is failing", "Trying again");
                         jsn.execute(tosend);
                     }
@@ -251,8 +271,48 @@ public class PlayQueue extends Activity implements Player.NotificationCallback {
                     e.printStackTrace();
                 }
             }else{
-                updateCounter = 0;
+
+                updateFailCounter = 0;
                 populateSongArr(result);
+            }
+        }
+    }
+
+    private class JSONBackgroupRemoveSong extends AsyncTask<String, String, JsonArray>{
+
+        @Override
+        protected JsonArray doInBackground(String... params) {
+            JSONGetter jsn = new JSONGetter();
+            try {
+                JsonArray result = jsn.sendGet(params[0]);
+                return result;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+        @Override
+        public void onPostExecute(JsonArray result){
+            if (result.size() <=0){
+                try {
+                    Thread.sleep(1000);
+                    updateRemoveCounter++;
+                    if(updateRemoveCounter > 2){
+                        updateRemoveCounter = 0;
+                        updateListView();
+                        Log.d("failed remove", "Exiting");
+                    }else{
+                        JSONBackgroupRemoveSong jsn = new JSONBackgroupRemoveSong();
+                        Log.d("remove is failing", "Trying again");
+                        jsn.execute(tosendDel);
+                    }
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }else {
+                userClicked = false;
+                updateListView();
             }
         }
     }
